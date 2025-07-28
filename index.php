@@ -54,7 +54,7 @@ function getAsteroids($date, $api_key) {
         ];
     }
     
-    // Retorna os asteroides para a data específica
+    
     return $data['near_earth_objects'][$date] ?? [];
 }
 ?>
@@ -105,6 +105,10 @@ function getAsteroids($date, $api_key) {
             background-color: #f4f4f4;
             margin-top: 20px;
         }
+        a {
+            color: #26282bff;
+            text-decoration: none;
+        }
         .logo-title {
             font-family: 'Plaster', cursive;
             font-size: 2.5rem;
@@ -136,10 +140,9 @@ function getAsteroids($date, $api_key) {
     </style>
 </head>
 <body>
-    <!-- navbar basica -->
     <header>
         <h1 class="logo-title">Snifferoid</h1>
-        <p>Sniffing the asteroids with NASA.</p>
+        <p>Sniffing the asteroids.</p>
         <nav>
             <ul>
                 <li><a href="index.php">Home</a></li>
@@ -148,12 +151,12 @@ function getAsteroids($date, $api_key) {
             </ul>
         </nav>
     </header>
+    <div id="detalhes" style="display:none; background:#fff; border:2px solid #ccc; padding:15px; margin: 20px auto; border-radius:8px; width: 70%;"></div>
     <main>
         <h2>Welcome to Snifferoid</h2>
-        <p>This is a simple web application designed to demonstrate my basic PHP skills.</p>
-        
+        <p>This is a simple web application to show asteroids data from NASA's API. Enter a date to see the asteroids that were near Earth on that day.<br>Note: The data is fetched from NASA's API, and the results may vary based on the date selected.</p>
         <form method="get" action="">
-            <label for="date">Select a date:</label>
+            <label for="date"><strong>Select a date:</strong></label>
             <input type="date" id="date" name="date" 
                    value="<?php echo htmlspecialchars($_GET['date'] ?? date('Y-m-d')); ?>"
                    max="<?php echo date('Y-m-d'); ?>">
@@ -179,12 +182,14 @@ function getAsteroids($date, $api_key) {
                 $diameter = $asteroid['estimated_diameter']['kilometers']['estimated_diameter_max'] ?? 0;
                 $hazardous = $asteroid['is_potentially_hazardous_asteroid'] ? '⚠️ Hazardous' : '✅ Safe';
                 $approach_date = $asteroid['close_approach_data'][0]['close_approach_date_full'] ?? 'Unknown';
+                $id = $asteroid['id'];
                 
                 echo "<li>";
                 echo "<strong>$name</strong><br>";
                 echo "Diameter: " . number_format($diameter, 3) . " km<br>";
                 echo "Status: $hazardous<br>";
-                echo "Approach: $approach_date";
+                echo "Approach: $approach_date" . "<br>";
+                echo "<button onclick=\"mostrarDetalhes('$id')\">Details</button>";
                 echo "</li>";
             }
             echo "</ul>";
@@ -193,6 +198,37 @@ function getAsteroids($date, $api_key) {
     </main>
     <footer>
         <p>&copy; <?php echo date("Y"); ?> Snifferoid. All rights reserved.</p>
+        <span> Snifferoid by <strong><a href="https://github.com/walacysilvam">Walacy Silva</a></strong></span>
     </footer>
+
+<script>
+function mostrarDetalhes(id) {
+    const div = document.getElementById('detalhes');
+    div.style.display = 'block';
+    div.innerHTML = "<p><em>Loading details...</em></p>";
+
+    fetch(`https://api.nasa.gov/neo/rest/v1/neo/${id}?api_key=DEMO_KEY`)
+        .then(res => res.json())
+        .then(data => {
+            const diametroMin = data.estimated_diameter.meters.estimated_diameter_min.toFixed(1);
+            const diametroMax = data.estimated_diameter.meters.estimated_diameter_max.toFixed(1);
+            const magnitude = data.absolute_magnitude_h;
+            const perigoso = data.is_potentially_hazardous_asteroid ? "⚠️ Sim" : "✅ Não";
+
+            div.innerHTML = `
+                <h3>Detalhes de ${data.name}</h3>
+                <p><strong>Magnitude Absoluta:</strong> ${magnitude}</p>
+                <p><strong>Diâmetro Estimado:</strong> ${diametroMin}m - ${diametroMax}m</p>
+                <p><strong>Potencialmente Perigoso:</strong> ${perigoso}</p>
+                <p><strong>Data de Observação:</strong> ${data.orbital_data.first_observation_date ?? 'Desconhecida'}</p>
+                <p><a href="${data.nasa_jpl_url}" target="_blank">Ver mais na NASA (JPL)</a></p>
+            `;
+        })
+        .catch(err => {
+            div.innerHTML = "<p style='color:red;'>Erro ao buscar detalhes do asteroide.</p>";
+            console.error(err);
+        });
+}
+</script>
 </body>
 </html>

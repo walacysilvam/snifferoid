@@ -11,13 +11,6 @@ Snifferoid is a lightweight PHP application that fetches and displays asteroid d
 
 ---
 
-## 🌐 Demo
-
-> Live preview (optional):  
-> [https://yourdomain.com/snifferoid](#)
-
----
-
 ## ⚙️ Features
 
 - 🔍 Fetches asteroid data by date  
